@@ -8,8 +8,8 @@ export interface Config {}
 
 export const Config: Schema<Config> = Schema.object({});
 
-const cfidsPath = path.join('D:', 'Koishi_project', 'pdxbot', 'external', 'monitor', 'src', 'cfids.json');
-const supervisorsPath = path.join('D:', 'Koishi_project', 'pdxbot', 'supervisor.json');
+const cfidsPath = path.join(__dirname, '../', '../', 'monitor', 'src', 'cfids.json');
+const supervisorsPath = path.join(__dirname, '../', '../', '../', 'supervisor.json');
 
 // 读取管理员列表
 function getSupervisors() {
@@ -30,31 +30,35 @@ export function apply(ctx: Context) {
       return cfids.join('\n');
     });
 
-  ctx.command('ad <cfid:string>', '添加一个cfid')
-    .action(async ({ session }, cfid) => {
+  ctx.command('ad [...cfids]', '批量添加CFID')
+    .action(async ({ session }, ...cfids: string[]) => {
       if (!isSupervisor(session.userId)) return '您没有权限执行此操作。';
 
-      const cfids = JSON.parse(fs.readFileSync(cfidsPath, 'utf8'));
-      if (!cfids.includes(cfid)) {
-        cfids.push(cfid);
-        fs.writeFileSync(cfidsPath, JSON.stringify(cfids, null, 2));
-        return `成功添加CFID: ${cfid}`;
-      } else {
-        return `${cfid} 已存在。`;
-      }
+      const existingCfids = JSON.parse(fs.readFileSync(cfidsPath, 'utf8'));
+      const addedCfids = [];
+      cfids.forEach(cfid => {
+        if (!existingCfids.includes(cfid)) {
+          existingCfids.push(cfid);
+          addedCfids.push(cfid);
+        }
+      });
+      fs.writeFileSync(cfidsPath, JSON.stringify(existingCfids, null, 2));
+      return addedCfids.length ? `成功添加CFID: ${addedCfids.join(', ')}` : '没有新的CFID被添加。';
     });
 
-  ctx.command('del <cfid:string>', '删除指定cfid')
-    .action(async ({ session }, cfid) => {
+  ctx.command('del [...cfids]', '批量删除指定CFID')
+    .action(async ({ session }, ...cfids: string[]) => {
       if (!isSupervisor(session.userId)) return '您没有权限执行此操作。';
 
-      let cfids = JSON.parse(fs.readFileSync(cfidsPath, 'utf8'));
-      if (cfids.includes(cfid)) {
-        cfids = cfids.filter(id => id !== cfid);
-        fs.writeFileSync(cfidsPath, JSON.stringify(cfids, null, 2));
-        return `成功删除CFID: ${cfid}`;
-      } else {
-        return `未找到CFID: ${cfid}。`;
-      }
+      let existingCfids = JSON.parse(fs.readFileSync(cfidsPath, 'utf8'));
+      const deletedCfids = [];
+      cfids.forEach(cfid => {
+        if (existingCfids.includes(cfid)) {
+          existingCfids = existingCfids.filter(id => id !== cfid);
+          deletedCfids.push(cfid);
+        }
+      });
+      fs.writeFileSync(cfidsPath, JSON.stringify(existingCfids, null, 2));
+      return deletedCfids.length ? `成功删除CFID: ${deletedCfids.join(', ')}` : '未找到指定的CFID。';
     });
 }
