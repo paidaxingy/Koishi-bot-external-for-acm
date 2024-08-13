@@ -57,14 +57,39 @@ export function apply(ctx: Context) {
     const submissions = response.data.result;
 
     let acCount = 0;
-    const nameSet=new Set();
+    const nameMap = new Map();
+    const rateMap = new Map();
     submissions.forEach(submission => {
       const submissionTime = moment.unix(submission.creationTimeSeconds);
-      if (submissionTime.isAfter(todayStart) && submission.verdict === 'OK'&&!nameSet.has(submission.problem.name)){
+      if (submissionTime.isAfter(todayStart) && submission.verdict === 'OK'&&!nameMap.has(submission.problem.name)){
         acCount++;
-        nameSet.add(submission.problem.name);
+        if(submission.problem.rating === undefined) {
+          nameMap.set(submission.problem.name, '未知');
+          rateMap.set('未知', (rateMap.get('未知') || 0) + 1);
+        }
+        else {
+          nameMap.set(submission.problem.name, submission.problem.rating);
+          rateMap.set(submission.problem.rating, (rateMap.get(submission.problem.rating) || 0) + 1);
+        }
       }
     });
+    
+    var nameStr = "";
+    Array.from(nameMap.entries())
+    .sort((a, b) => a[1] - b[1]) // 按 value 升序排序
+    .forEach(([key, value]) => {
+      nameStr += `《${key}》 : ${value}\n`;
+      console.log(`${key}:${value}`);
+    });
+    
+    var rateStr = "";
+    Array.from(rateMap.entries())
+    .sort((a, b) => a[0] < b[0] ? -1 : 1) // 按 key 升序排序
+    .forEach(([key, value]) => {
+      rateStr += ` ${key} 分 ${value} 道\n`;
+      console.log(`${key}:${value}`);
+    });
+
 
     var tmp = '今天之内';
     
@@ -77,6 +102,6 @@ export function apply(ctx: Context) {
       tmp = '一周内'
     else if(time === 'month')
       tmp = '一个月内'
-    return `${cfid} 在`+ tmp +`解决了 ${acCount} 道题目。`;
+    return `${cfid} 在`+ tmp +`解决了 ${acCount} 道题目。分别为\n${nameStr}共解决了\n${rateStr}`;
   });
 }
