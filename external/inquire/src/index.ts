@@ -102,6 +102,6 @@ export function apply(ctx: Context) {
       tmp = '一周内'
     else if(time === 'month')
       tmp = '一个月内'
-    return `${cfid} 在`+ tmp +`解决了 ${acCount} 道题目。分别为\n${nameStr}共解决了\n${rateStr}`;
+    return `${cfid} 在`+ tmp +`解决了 ${acCount} 道题目。` + ( acCount > 0 ? `分别为\n${nameStr}共解决了\n${rateStr}` : "");
   });
 }
