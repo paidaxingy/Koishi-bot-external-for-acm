@@ -31,6 +31,7 @@ async function fetchContests() {
     return contestsInfo;
   } catch (error) {
     console.error('Error fetching contest data:', error);
+    return '获取比赛信息时发生错误。';
   }
 }
 
