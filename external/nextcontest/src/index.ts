@@ -25,11 +25,14 @@ async function fetchContestsCF() {
       if (contest.phase === 'BEFORE') {
         const contestTime = moment.unix(contest.startTimeSeconds).format('YYYY-MM-DD HH:mm:ss');
         const registrationLink = `https://codeforces.com/contestRegistration/${contest.id}`;
-        contests.push({
-          contestName: contest.name,
-          contestTime: contestTime,
-          contestLink: registrationLink
-        });
+
+        if (moment(contestTime, 'YYYY-MM-DD HH:mm:ss').isAfter(moment())) { // 晚于当前时间才计入
+          contests.push({
+            contestName: contest.name,
+            contestTime: contestTime,
+            contestLink: registrationLink
+          });
+        }
       }
     });
     
@@ -60,11 +63,13 @@ const fetchContestsNC = async () => {
       const contestStartTime = contestStartTimeMatch[1];
       const contestLink = 'https://ac.nowcoder.com' + $(elem).find('.platform-item-cont h4 a').attr('href');
 
-      contests.push({
-        contestName,
-        contestTime: contestStartTime,
-        contestLink,
-      });
+      if (moment(contestStartTime, 'YYYY-MM-DD HH:mm').isAfter(moment())) {
+        contests.push({
+          contestName,
+          contestTime: contestStartTime,
+          contestLink,
+        });
+      }
     });
 
     return contests; // 返回包含比赛信息对象的数组
@@ -90,12 +95,14 @@ async function fetchContestsAC() {
       const contestTime = moment(timeText, 'YYYY-MM-DD HH:mm:ssZ').format('YYYY-MM-DD HH:mm:ss');
       const contestName = $(elem).find('td:nth-child(2) a').text().trim();
       const contestLink = 'https://atcoder.jp' + $(elem).find('td:nth-child(2) a').attr('href');
-
-      contests.push({
-        contestName,
-        contestTime,
-        contestLink,
-      });
+      
+      if (moment(contestTime).isAfter(moment())) {
+        contests.push({
+          contestName,
+          contestTime,
+          contestLink,
+        });
+      }
 
       count++;
     });
@@ -190,7 +197,7 @@ setInterval(async () => {
       message += result.emptyPlatforms.length !== 0 ? `${result.emptyPlatforms}因网络原因，没有相关信息。`: ``;
       diffSec = GetDiffTime(nearestContest.contestTime, now);
 
-      await ctx.broadcast(['onebot:xxxxx'], `现在是 ${formatTime(currentHour, currentMinute)}\n最近的比赛:\n` + message);
+      await ctx.broadcast(['onebot:', 'onebot:'], `现在是 ${formatTime(currentHour, currentMinute)}\n最近的比赛:\n` + message);
       if(diffSec >= 3610) {
         oneHourTime = new Date(now.getTime() + (diffSec - 3600) * 1000);
         f0 = true;
@@ -205,6 +212,7 @@ setInterval(async () => {
     if (result && result.nearestContest) {
       const nearestContest = result.nearestContest;
       diffSec = GetDiffTime(nearestContest.contestTime, now);
+      console.log(diffSec, nearestContest.contestTime, now);
       if(diffSec >= 3610) {
         oneHourTime = new Date(now.getTime() + (diffSec - 3600) * 1000);
         f0 = true;
@@ -222,10 +230,10 @@ setInterval(async () => {
       const nearestContest = result.nearestContest;
       var message = `比赛名称: ${nearestContest.contestName}\n比赛时间: ${nearestContest.contestTime}\n报名链接: ${nearestContest.contestLink}\n`;
       // message += `\n距离比赛开始还有${GetDiffTime_all(nearestContest.contestTime, new Date())}开始。`
-      message += '友情提示：距离比赛开始时间不足一小时！\n';
+      message += '友情提示：距离比赛开始时间不足十分钟！\n';
       message += result.emptyPlatforms.length !== 0 ? `${result.emptyPlatforms}因网络原因，没有相关信息。`: ``;
       
-      await ctx.broadcast(['onebot:xxxxx'], `现在是 ${formatTime(currentHour, currentMinute)}\n最近的比赛:\n` + message);
+      await ctx.broadcast(['onebot:', 'onebot:'], `现在是 ${formatTime(currentHour, currentMinute)}\n最近的比赛:\n` + message);
     }
   }
 
@@ -236,10 +244,10 @@ setInterval(async () => {
       const nearestContest = result.nearestContest;
       var message = `比赛名称: ${nearestContest.contestName}\n比赛时间: ${nearestContest.contestTime}\n报名链接: ${nearestContest.contestLink}\n`;
       // message += `\n距离比赛开始还有${GetDiffTime_all(nearestContest.contestTime, new Date())}开始。`
-      message += '友情提示：距离比赛开始时间不足十分钟！\n';
+      message += '友情提示：距离比赛开始时间不足一小时！\n';
       message += result.emptyPlatforms.length !== 0 ? `${result.emptyPlatforms}因网络原因，没有相关信息。`: ``;
       
-      await ctx.broadcast(['onebot:xxxxx'], `现在是 ${formatTime(currentHour, currentMinute)}\n最近的比赛:\n` + message);
+      await ctx.broadcast(['onebot:', 'onebot:'], `现在是 ${formatTime(currentHour, currentMinute)}\n最近的比赛:\n` + message);
     }
     tenMinTime = new Date(now.getTime() + 2700 * 1000);
     f1 = true;
